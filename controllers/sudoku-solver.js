@@ -16,6 +16,11 @@ class SudokuSolver {
   }
 
   //
+  validateValue(value) {
+    return '123456789'.indexOf(value) !== -1;
+  }
+
+  //
   rowNumber(row) {
     const rowString = 'ABCDEFGHI';
     return rowString.indexOf(row);
@@ -36,11 +41,11 @@ class SudokuSolver {
   }
 
   //
-  withoutDuplicate(partString, value) {
+  withoutDuplicate(partString, index, value) {
     const firstIndex = partString.indexOf(value);
     if (firstIndex === -1) {
       return true;
-    } else if (firstIndex === partString.lastIndexOf(value)) {
+    } else if (firstIndex === index && firstIndex === partString.lastIndexOf(value)) {
       return true;
     }
     return false;
@@ -51,18 +56,21 @@ class SudokuSolver {
 
     if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
 
+    if (!this.validateValue(value)) throw new Error('Invalid value.');
+
     const indexStart = row * 9;
     const rowString = puzzleString.substring(indexStart, indexStart + 9);
-    // console.log(`rowString`, rowString); // DEBUG
     // console.log(puzzleString, `row ${row}`, `column ${column}`, `value ${value}`, `rowString ${rowString}`); // DEBUG
 
-    return this.withoutDuplicate(rowString, value);
+    return this.withoutDuplicate(rowString, column, value);
   }
 
   checkColPlacement(puzzleString, row, column, value) {
     if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
 
     if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
+
+    if (!this.validateValue(value)) throw new Error('Invalid value.');
 
     let columnString = puzzleString[column];
     let i = 1;
@@ -71,13 +79,15 @@ class SudokuSolver {
       i++;
     }
 
-    return this.withoutDuplicate(columnString, value);
+    return this.withoutDuplicate(columnString, row, value);
   }
 
   checkRegionPlacement(puzzleString, row, column, value) {
     if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
 
     if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
+
+    if (!this.validateValue(value)) throw new Error('Invalid value.');
     
     const rowStart = this.startNumber(row);
     const columnStart = this.startNumber(column);
@@ -89,7 +99,7 @@ class SudokuSolver {
       }
     }
 
-    return this.withoutDuplicate(regionString, value);
+    return this.withoutDuplicate(regionString, (row - rowStart) * 3 + column - columnStart, value);
   }
 
   solve(puzzleString) {

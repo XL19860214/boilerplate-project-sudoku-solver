@@ -82,9 +82,30 @@ suite('UnitTests', () => {
     });
 
     // #5
-    // test('Logic handles an invalid row placement', done => {
+    test('Logic handles an invalid row placement', done => {
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        let i = 0;
+        while (i < 9) {
+          let rowString = puzzleAndSolution[0].slice(i * 9, (i + 1) * 9);
+          let waitingInvalidPlacements = validPlacementString.split('').filter(validPlacement => {
+            if (validPlacement === '.') return false;
+            return rowString.indexOf(validPlacement) !== -1;
+          });
 
-    // });
+          rowString.split('').forEach((placeholder, column) => {
+            waitingInvalidPlacements.forEach(waitingInvalidPlacement => {
+              // Skip the same
+              if (placeholder === waitingInvalidPlacement) {
+                return;
+              }
+              assert.isFalse(solver.checkRowPlacement(puzzleAndSolution[0], i, column, waitingInvalidPlacement), `Input ${waitingInvalidPlacement} to position ${column} in ${rowString} should be an invalid row placement.`);
+            });
+          });
+          i++;
+        }
+      });
+      done();
+    });
 
 
   })
