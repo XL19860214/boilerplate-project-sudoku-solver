@@ -107,6 +107,34 @@ suite('UnitTests', () => {
       done();
     });
 
+    // #6
+    test('Logic handles a valid column placement', done => {
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        let i = 0;
+        while (i < 9) {
+          let j = 0;
+          let columnString = '';
+          while (j < 9) {
+            columnString.concat(j * 9 + i);
+            j++;
+          }
+          let waitingValidPlacements = validPlacementString.split('').filter(validPlacement => {
+            if (validPlacement === '.') return false;
+            return columnString.indexOf(validPlacement) === -1;
+          });
+
+          columnString.split('').forEach((placeholder, row) => {
+            waitingValidPlacements.forEach(waitingValidPlacement => {
+              assert.isTrue(solver.checkColumnPlacement(puzzleAndSolution[0], row, i, waitingValidPlacement), `Input ${waitingValidPlacement} to position ${row} in ${columnString} should be a valid column placement.`);
+            });
+          });
+          i++;
+        }
+      });
+      done();
+    });
+
+    // #7
 
   })
 
