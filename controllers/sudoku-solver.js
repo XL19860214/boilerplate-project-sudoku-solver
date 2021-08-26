@@ -5,6 +5,17 @@ class SudokuSolver {
   }
 
   //
+  validateRowColumn(row, column) {
+    if (row < 0 || row > 8) {
+      return false;
+    }
+    if (column < 0 || column > 8) {
+      return false;
+    }
+    return true;
+  }
+
+  //
   rowNumber(row) {
     const rowString = 'ABCDEFGHI';
     return rowString.indexOf(row);
@@ -36,23 +47,27 @@ class SudokuSolver {
   }
 
   checkRowPlacement(puzzleString, row, column, value) {
-    if (!this.valid(puzzleString)) throw new Error('Invalid puzzle string.');
+    if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
 
-    const rowNumber = this.rowNumber(row);
-    const rowStart = rowNumber * 9;
-    const rowString = puzzleString.substring(rowStart, 9);
+    if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
+
+    const indexStart = row * 9;
+    const rowString = puzzleString.substring(indexStart, indexStart + 9);
+    // console.log(`rowString`, rowString); // DEBUG
+    // console.log(puzzleString, `row ${row}`, `column ${column}`, `value ${value}`, `rowString ${rowString}`); // DEBUG
 
     return this.withoutDuplicate(rowString, value);
   }
 
   checkColPlacement(puzzleString, row, column, value) {
-    if (!this.valid(puzzleString)) throw new Error('Invalid puzzle string.');
+    if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
 
-    const columnNumber = this.columnNumber(column);
-    let columnString = puzzleString[columnNumber];
+    if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
+
+    let columnString = puzzleString[column];
     let i = 1;
     while (columnString.length < 9) {
-      columnString.concat(puzzleString[columnNumber * i]);
+      columnString.concat(puzzleString[column * i]);
       i++;
     }
 
@@ -60,12 +75,12 @@ class SudokuSolver {
   }
 
   checkRegionPlacement(puzzleString, row, column, value) {
-    if (!this.valid(puzzleString)) throw new Error('Invalid puzzle string.');
+    if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
+
+    if (!this.validateRowColumn(row, column)) throw new Error('Invalid row or column.');
     
-    const rowNumber = this.rowNumber(row);
-    const rowStart = this.startNumber(rowNumber);
-    const columnNumber = this.columnNumber(column);
-    const columnStart = this.startNumber(columnNumber);
+    const rowStart = this.startNumber(row);
+    const columnStart = this.startNumber(column);
     let regionString = '';
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
