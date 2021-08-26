@@ -75,7 +75,7 @@ class SudokuSolver {
     let columnString = puzzleString[column];
     let i = 1;
     while (columnString.length < 9) {
-      columnString.concat(puzzleString[column * i]);
+      columnString = columnString.concat(puzzleString[column + (i * 9)]);
       i++;
     }
 
@@ -95,7 +95,7 @@ class SudokuSolver {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         const index = (rowStart + i) * 9 + (columnStart + j);
-        regionString.concat(puzzleString[index]);
+        regionString = regionString.concat(puzzleString[index]);
       }
     }
 

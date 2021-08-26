@@ -115,7 +115,7 @@ suite('UnitTests', () => {
           let j = 0;
           let columnString = '';
           while (j < 9) {
-            columnString.concat(j * 9 + i);
+            columnString = columnString.concat(puzzleAndSolution[0][j * 9 + i]);
             j++;
           }
           let waitingValidPlacements = validPlacementString.split('').filter(validPlacement => {
@@ -125,7 +125,7 @@ suite('UnitTests', () => {
 
           columnString.split('').forEach((placeholder, row) => {
             waitingValidPlacements.forEach(waitingValidPlacement => {
-              assert.isTrue(solver.checkColumnPlacement(puzzleAndSolution[0], row, i, waitingValidPlacement), `Input ${waitingValidPlacement} to position ${row} in ${columnString} should be a valid column placement.`);
+              assert.isTrue(solver.checkColPlacement(puzzleAndSolution[0], row, i, waitingValidPlacement), `Input ${waitingValidPlacement} to position ${row} in ${columnString} should be a valid column placement.`);
             });
           });
           i++;
@@ -135,6 +135,38 @@ suite('UnitTests', () => {
     });
 
     // #7
+    test('Logic handles an invalid column placement', done => {
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        let i = 0;
+        while (i < 9) {
+          let j = 0;
+          let columnString = '';
+          while (j < 9) {
+            columnString = columnString.concat(puzzleAndSolution[0][j * 9 + i]);
+            j++;
+          }
+          let waitingInvalidPlacements = validPlacementString.split('').filter(validPlacement => {
+            if (validPlacement === '.') return false;
+            return columnString.indexOf(validPlacement) !== -1;
+          });
+          // console.log(`columnString`, columnString); // DEBUG
+          // console.log(`waitingInvalidPlacements`, waitingInvalidPlacements); // DEBUG
+
+          columnString.split('').forEach((placeholder, row) => {
+            waitingInvalidPlacements.forEach(waitingInvalidPlacement => {
+              // console.log(`Input ${waitingInvalidPlacement} to position ${row} in ${columnString} should be an invalid column placement.`); // DEBUG
+              // Skip the same
+              if (placeholder === waitingInvalidPlacement) {
+                return;
+              }
+              assert.isFalse(solver.checkColPlacement(puzzleAndSolution[0], row, i, waitingInvalidPlacement), `Input ${waitingInvalidPlacement} to position ${row} in ${columnString} should be an invalid column placement.`);
+            });
+          });
+          i++;
+        }
+      });
+      done();
+    });
 
   })
 
