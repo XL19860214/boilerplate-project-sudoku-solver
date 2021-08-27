@@ -168,6 +168,46 @@ suite('UnitTests', () => {
       done();
     });
 
+
+    // #8
+    test('Logic handles a valid region (3x3 grid) placement', done => {
+      const step = 3;
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        let i = 0;
+        while (i < 9) {
+          let y = Math.floor(i / step) * step;
+          let x = (i % step) * step;
+          let regionString = '';
+          let j = 0;
+          while (j < step) {
+            let k = 0;
+            while (k < step) {
+              let index = (y + j) * 9 + x + k;
+              // console.log(`puzzleAndSolution[0][index]`, puzzleAndSolution[0][index]); // DEBUG
+              regionString = regionString.concat(puzzleAndSolution[0][index]);
+              k++;
+            }
+            j++;
+          }
+          // console.log(`puzzleString ${puzzleAndSolution[0]}`, `regionString ${regionString}`); // DEBUG
+          let waitingValidPlacements = validPlacementString.split('').filter(validPlacement => {
+            if (validPlacement === '.') return false;
+            return regionString.indexOf(validPlacement) === -1;
+          });
+
+          regionString.split('').forEach((placeholder, pos) => {
+            waitingValidPlacements.forEach(waitingValidPlacement => {
+              let row = y + Math.floor(pos / step);
+              let column = x + pos % step;
+              assert.isTrue(solver.checkRegionPlacement(puzzleAndSolution[0], row, column, waitingValidPlacement), `Input ${waitingValidPlacement} to position ${pos} (${row}, ${column}) in ${regionString} should be a valid region placement.`);
+            });
+          });
+          i++;
+        }
+      });
+      done();
+    });
+
   })
 
 
