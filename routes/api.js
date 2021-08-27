@@ -13,7 +13,7 @@ module.exports = function (app) {
     
   app.route('/api/solve')
     .post((req, res) => {
-      if (!req.body.puzzle) {
+      if (req.body.puzzle === undefined) {
         return res.json({ error: 'Required field missing' });
       }
 

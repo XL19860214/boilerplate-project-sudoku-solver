@@ -10,6 +10,10 @@ const async = require('async');
 const { puzzlesAndSolutions } = require('../controllers/puzzle-strings.js');
 const { invalidPuzzlesAndSolutions } = require('../controllers/invalid-puzzle-strings.js');
 
+String.prototype.randomChar = function() {
+  return this[Math.floor(Math.random() * this.length)];
+};
+
 suite('Functional Tests', () => {
 
   suite('Route /api/solve Tests', () => {
@@ -51,7 +55,7 @@ suite('Functional Tests', () => {
         const puzzleStrings = [];
         let i = 0;
         while (i < amount) {
-          puzzleStrings.push(invalidCharacters[Math.floor(Math.random() * invalidCharacters.length)].repeat(81));
+          puzzleStrings.push(invalidCharacters.randomChar().repeat(81));
           i++;
         }
 
@@ -65,13 +69,52 @@ suite('Functional Tests', () => {
               puzzle: puzzleStringWithInvalidCharacters
             })
             .end((err, res)=> {
+              callback(err);
               assert.isNull(err);
               assert.equal(res.status, 200);
               assert.equal(res.body.error, 'Invalid characters in puzzle');
             });
       }, err => done());
+    });
 
-      done();
+
+    // #4
+    test('Solve a puzzle with incorrect length: POST request to /api/solve', done => {
+      const puzzleStringsWithIncorrectLength = amount => {
+        const validCharacters = '123456789.';
+        const puzzleStrings = [];
+        let i = 0;
+        while (i < amount) {
+          const randomLength = Math.floor(Math.random() * 100);
+          if (randomLength === 81) {
+            continue;
+          }
+          let puzzleString = '';
+          let j = 0;
+          while (j < randomLength) {
+            puzzleString += validCharacters.randomChar();
+            j++;
+          }
+          puzzleStrings.push(puzzleString);
+          i++;
+        }
+
+        return puzzleStrings;
+      };
+
+      async.each(puzzleStringsWithIncorrectLength(100), (puzzleStringWithIncorrectLength, callback) => {
+        chai.request(server)
+          .post('/api/solve')
+          .send({
+            puzzle: puzzleStringWithIncorrectLength
+          })
+          .end((err, res)=> {
+            callback(err);
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Expected puzzle to be 81 characters long');
+          });
+      }, err => done());
     });
 
   });
