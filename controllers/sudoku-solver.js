@@ -191,12 +191,16 @@ class SudokuSolver {
     };
 
     let currentStep = 0;
-    while (solution.includes('.') || currentStep < placeholdersAmount - 1) {
+    while (currentStep >= 0 && (solution.includes('.') || currentStep < placeholdersAmount - 1)) {
       if (stepSolve(currentStep)) {
         currentStep++;
       } else {
         currentStep--;
       }
+    }
+
+    if (currentStep < 0) {
+      throw new Error('Puzzle cannot be solved');
     }
 
     // console.log(`solution`, solution); // DEBUG

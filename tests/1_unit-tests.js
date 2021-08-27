@@ -12,6 +12,7 @@ const randomValidPlacement = () => {
 }
 
 const { puzzlesAndSolutions } = require('../controllers/puzzle-strings.js');
+const { invalidPuzzlesAndSolutions } = require('../controllers/invalid-puzzle-strings.js');
 
 suite('UnitTests', () => {
 
@@ -265,7 +266,18 @@ suite('UnitTests', () => {
           const row = solver.indexToRowNumber(index);
           const column = solver.indexToColumnNumber(index);
           assert.isTrue(solver.checkRowPlacement(puzzleAndSolution[0], row, column, placement));
+          assert.isTrue(solver.checkColPlacement(puzzleAndSolution[0], row, column, placement));
+          assert.isTrue(solver.checkRegionPlacement(puzzleAndSolution[0], row, column, placement));
         });
+      });
+
+      done();
+    });
+
+    // #11
+    test('Invalid puzzle strings fail the solver', done => {
+      invalidPuzzlesAndSolutions.forEach(invalidPuzzlesAndSolution => {
+        assert.throws(() => solver.solve(invalidPuzzlesAndSolution[0]));
       });
 
       done();
