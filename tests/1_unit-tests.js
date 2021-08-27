@@ -208,6 +208,49 @@ suite('UnitTests', () => {
       done();
     });
 
+    // #9
+    test('Logic handles an invalid region (3x3 grid) placement', done => {
+      const step = 3;
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        let i = 0;
+        while (i < 9) {
+          let y = Math.floor(i / step) * step;
+          let x = (i % step) * step;
+          let regionString = '';
+          let j = 0;
+          while (j < step) {
+            let k = 0;
+            while (k < step) {
+              let index = (y + j) * 9 + x + k;
+              // console.log(`puzzleAndSolution[0][index]`, puzzleAndSolution[0][index]); // DEBUG
+              regionString = regionString.concat(puzzleAndSolution[0][index]);
+              k++;
+            }
+            j++;
+          }
+          // console.log(`puzzleString ${puzzleAndSolution[0]}`, `regionString ${regionString}`); // DEBUG
+          let waitingInvalidPlacements = validPlacementString.split('').filter(validPlacement => {
+            if (validPlacement === '.') return false;
+            return regionString.indexOf(validPlacement) !== -1;
+          });
+
+          regionString.split('').forEach((placeholder, pos) => {
+            waitingInvalidPlacements.forEach(waitingInvalidPlacement => {
+              // Skip the same
+              if (placeholder === waitingInvalidPlacement) {
+                return;
+              }
+              let row = y + Math.floor(pos / step);
+              let column = x + pos % step;
+              assert.isFalse(solver.checkRegionPlacement(puzzleAndSolution[0], row, column, waitingInvalidPlacement), `Input ${waitingInvalidPlacement} to position ${pos} (${row}, ${column}) in ${regionString} should be an invalid region placement.`);
+            });
+          });
+          i++;
+        }
+      });
+      done();
+    })
+
   })
 
 
