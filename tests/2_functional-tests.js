@@ -17,6 +17,7 @@ String.prototype.randomChar = function() {
 suite('Functional Tests', () => {
 
   suite('Route /api/solve Tests', () => {
+
     // #1
     test('Solve a puzzle with valid puzzle string: POST request to /api/solve', done => {
       async.each(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
@@ -31,7 +32,9 @@ suite('Functional Tests', () => {
             assert.equal(res.status, 200);
             assert.equal(res.body.solution, puzzleAndSolution[1]);
           });
-      }, err => done());
+      }, err => {
+        done();
+      });
     });
 
     // #2
@@ -74,7 +77,9 @@ suite('Functional Tests', () => {
               assert.equal(res.status, 200);
               assert.equal(res.body.error, 'Invalid characters in puzzle');
             });
-      }, err => done());
+      }, err => {
+        done();
+      });
     });
 
 
@@ -114,7 +119,28 @@ suite('Functional Tests', () => {
             assert.equal(res.status, 200);
             assert.equal(res.body.error, 'Expected puzzle to be 81 characters long');
           });
-      }, err => done());
+      }, err => {
+        done();
+      });
+    });
+
+    // #5
+    test('Solve a puzzle that cannot be solved: POST request to /api/solve', done => {
+      async.each(invalidPuzzlesAndSolutions, (invalidPuzzleAndSolution, callback) => {
+        chai.request(server)
+          .post('/api/solve')
+          .send({
+            puzzle: invalidPuzzleAndSolution[0]
+          })
+          .end((err, res)=> {
+            callback(err);
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Puzzle cannot be solved');
+          });
+      }, err => {
+        done();
+      });
     });
 
   });

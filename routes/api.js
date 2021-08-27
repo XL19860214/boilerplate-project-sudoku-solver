@@ -26,7 +26,16 @@ module.exports = function (app) {
         }
       }
       
-      const solution = solver.solve(req.body.puzzle);
+      // console.log(`req.body.puzzle`, req.body.puzzle); // DEBUG
+      let solution;
+      try {
+        solution = solver.solve(req.body.puzzle);
+      } catch (error) {
+        if (error.name = 'UnsolvableError') {
+          return res.json({ error: 'Puzzle cannot be solved' });
+        }
+      }
+      
       res.json({
         solution
       });

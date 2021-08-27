@@ -200,7 +200,9 @@ class SudokuSolver {
     }
 
     if (currentStep < 0) {
-      throw new Error('Puzzle cannot be solved');
+      const unsolvableError = new Error('Puzzle cannot be solved');
+      unsolvableError.name = 'UnsolvableError';
+      throw unsolvableError;
     }
 
     // console.log(`solution`, solution); // DEBUG
