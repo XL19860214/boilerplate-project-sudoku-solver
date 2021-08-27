@@ -56,7 +56,8 @@ suite('UnitTests', () => {
       }
       done();
     });
-  })
+
+  });
 
   suite('Row, Column and Region Tests', () => {
     // #4
@@ -251,7 +252,20 @@ suite('UnitTests', () => {
       done();
     })
 
-  })
+  });
+
+  suite('Solve Tests', () => {
+
+    // #10
+    test('Valid puzzle strings pass the solver', done => {
+      puzzlesAndSolutions.forEach(puzzleAndSolution => {
+        solver.solve(puzzleAndSolution[0]);
+      });
+
+      done();
+    });
+
+  });
 
 
 });

@@ -1,3 +1,5 @@
+const EventTarget = require('./event-target.js');
+
 class SudokuSolver {
 
   validate(puzzleString) {
@@ -31,13 +33,24 @@ class SudokuSolver {
     return column - 1;
   }
 
-  startNumber(rowOrColumnNumber) {
+  // Region start number
+  regionStartNumber(rowOrColumnNumber) {
     if (rowOrColumnNumber >= 0 && rowOrColumnNumber < 3) {
       return 0;
     } else if (rowOrColumnNumber >= 3 && rowOrColumnNumber < 6) {
       return 3;
     }
     return 6;
+  }
+
+  // indexToRowNumber
+  indexToRowNumber(index) {
+    return Math.floor(index / 9);
+  }
+
+  // indexToColumnNumber
+  indexToColumnNumber(index) {
+    return index % 9;
   }
 
   //
@@ -89,8 +102,8 @@ class SudokuSolver {
 
     if (!this.validateValue(value)) throw new Error('Invalid value.');
     
-    const rowStart = this.startNumber(row);
-    const columnStart = this.startNumber(column);
+    const rowStart = this.regionStartNumber(row);
+    const columnStart = this.regionStartNumber(column);
     let regionString = '';
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
@@ -103,7 +116,74 @@ class SudokuSolver {
   }
 
   solve(puzzleString) {
-    
+    if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
+
+    const valid = puzzleString.split('').every((placeholder, index) => {
+      const row = Math.floor(index / 9);
+      const column = index % 9;
+
+      if (placeholder === '.') return true;
+
+      return this.checkRowPlacement(puzzleString, row, column, placeholder) && this.checkColPlacement(puzzleString, row, column, placeholder) && this.checkRegionPlacement(puzzleString, row, column, placeholder);
+
+    });
+
+    if (!valid) throw new Error('Invalid puzzle string.');
+
+    // 1. Compute possible placements for each cell at initial state.
+    // 2. Complete unique solution for collection or inked collections.
+    //      - Collection indiates row, column, region.
+    // 3. Start resolve minimum variant solution collections.
+    // 4. Finish and output single resolution or multiple solutions.
+
+    const cells = new Map();
+    puzzleString.split('').forEach((placeholder, index) => {
+      const cellRow = this.indexToRowNumber(index);
+      const cellColumn = this.indexToColumnNumber(index);
+      // 0 1 2
+      // 3 4 5
+      // 6 7 8
+      const regionOrder = Math.floor(cellRow / 3) * 3 + Math.floor(cellColumn / 3) * 3;
+      const regionX = cellColumn - this.regionStartNumber(cellColumn);
+      const regionY = cellRow - this.regionStartNumber(cellRow);
+      let placement = null;
+      if (placeholder === '.') {
+        const placementInitialOptions = '123456789'.split('').filter(placement => {
+          return this.checkRowPlacement(puzzleString, cellRow, cellColumn, placement)
+                   && this.checkColPlacement(puzzleString, cellRow, cellColumn, placement)
+                   && this.checkRegionPlacement(puzzleString, cellRow, cellColumn, placement)
+        });
+        placement = {
+          options: {
+            initial: new Set(placementInitialOptions),
+            current: new Set(placementInitialOptions),
+            value: null
+          }
+        }
+      }
+      // Cell
+      const cell = Object.assign(new EventTarget(), {
+        index, // Index in puzzleString
+        placeholder, // Initial placeholder
+        row: cellRow,
+        column: cellColumn,
+        region: {
+          order: regionOrder,
+          x: regionX, // Internal x
+          y: regionY, // internal y
+        },
+        placement
+      });
+      cell.addEventListener('updatePlacementValue', updatedCell => {
+        
+      });
+      //
+      cells.set(index, cell);
+    });
+
+    console.log(`cells`, cells); // DEBUG
+
+    return [];
   }
 }
 
