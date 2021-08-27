@@ -259,7 +259,13 @@ suite('UnitTests', () => {
     // #10
     test('Valid puzzle strings pass the solver', done => {
       puzzlesAndSolutions.forEach(puzzleAndSolution => {
-        solver.solve(puzzleAndSolution[0]);
+        const solution = solver.solve(puzzleAndSolution[0]);
+        assert.notInclude(solution, '.');
+        solution.split('').forEach((placement, index) => {
+          const row = solver.indexToRowNumber(index);
+          const column = solver.indexToColumnNumber(index);
+          assert.isTrue(solver.checkRowPlacement(puzzleAndSolution[0], row, column, placement));
+        });
       });
 
       done();

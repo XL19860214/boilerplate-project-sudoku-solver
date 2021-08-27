@@ -1,4 +1,4 @@
-const EventTarget = require('./event-target.js');
+
 
 class SudokuSolver {
 
@@ -130,60 +130,78 @@ class SudokuSolver {
 
     if (!valid) throw new Error('Invalid puzzle string.');
 
-    // 1. Compute possible placements for each cell at initial state.
-    // 2. Complete unique solution for collection or inked collections.
-    //      - Collection indiates row, column, region.
-    // 3. Start resolve minimum variant solution collections.
-    // 4. Finish and output single resolution or multiple solutions.
+    // ======================================================================================
+    // Brute-force
 
-    const cells = new Map();
+    // Log placeholder positions
+    let placeholders = [];
     puzzleString.split('').forEach((placeholder, index) => {
-      const cellRow = this.indexToRowNumber(index);
-      const cellColumn = this.indexToColumnNumber(index);
-      // 0 1 2
-      // 3 4 5
-      // 6 7 8
-      const regionOrder = Math.floor(cellRow / 3) * 3 + Math.floor(cellColumn / 3) * 3;
-      const regionX = cellColumn - this.regionStartNumber(cellColumn);
-      const regionY = cellRow - this.regionStartNumber(cellRow);
-      let placement = null;
       if (placeholder === '.') {
-        const placementInitialOptions = '123456789'.split('').filter(placement => {
-          return this.checkRowPlacement(puzzleString, cellRow, cellColumn, placement)
-                   && this.checkColPlacement(puzzleString, cellRow, cellColumn, placement)
-                   && this.checkRegionPlacement(puzzleString, cellRow, cellColumn, placement)
-        });
-        placement = {
-          options: {
-            initial: new Set(placementInitialOptions),
-            current: new Set(placementInitialOptions),
-            value: null
-          }
-        }
+        placeholders.push(index);
       }
-      // Cell
-      const cell = Object.assign(new EventTarget(), {
-        index, // Index in puzzleString
-        placeholder, // Initial placeholder
-        row: cellRow,
-        column: cellColumn,
-        region: {
-          order: regionOrder,
-          x: regionX, // Internal x
-          y: regionY, // internal y
-        },
-        placement
-      });
-      cell.addEventListener('updatePlacementValue', updatedCell => {
-        
-      });
-      //
-      cells.set(index, cell);
     });
+    const placeholdersAmount = placeholders.length;
 
-    console.log(`cells`, cells); // DEBUG
+    // console.log(`placeholders`, placeholders.length, placeholders); // DEBUG
 
-    return [];
+    let solution = puzzleString;
+
+    const fillOptions = start => {
+      let options = '';
+      let i = start;
+      while (i < 10) {
+        options = options.concat(i);
+        i++;
+      }
+
+      return options;
+    };
+
+    const stepSolve = step => {
+      let updated = false;
+      const index = placeholders[step];
+      const row = this.indexToRowNumber(index);
+      const column = this.indexToColumnNumber(index);
+      let options;
+      const placeholder = solution.split('')[index];
+      if (placeholder === '.') {
+        options = fillOptions(1);
+      } else { // Try next
+        options = fillOptions(parseInt(placeholder) + 1);
+      }
+
+      options.split('').forEach(option => {
+        if (updated) {
+          return;
+        }
+        if (this.checkRowPlacement(solution, row, column, option) && this.checkColPlacement(solution, row, column, option) && this.checkRegionPlacement(solution, row, column, option)) {
+          solution = solution.substring(0, index) + option + solution.substring(index + 1);
+          updated = true;
+        }
+      });
+
+      // Revert
+      if (!updated && placeholder !== '.') {
+        solution = solution.substring(0, index) + '.' + solution.substring(index + 1);
+      }
+
+      // console.log(`step`, step, `index`, index, `placeholder`, placeholder, `options`, options, `solution`, solution); // DEBUG
+
+      return updated;
+    };
+
+    let currentStep = 0;
+    while (solution.includes('.') || currentStep < placeholdersAmount - 1) {
+      if (stepSolve(currentStep)) {
+        currentStep++;
+      } else {
+        currentStep--;
+      }
+    }
+
+    // console.log(`solution`, solution); // DEBUG
+
+    return solution;
   }
 }
 
