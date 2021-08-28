@@ -18,6 +18,15 @@ module.exports = function (app) {
       //   `column`, column,
       //   `placement`, placement
       // ); // DEBUG
+
+      if (['puzzle', 'coordinate', 'value'].some(field => {
+        if (!req.body.hasOwnProperty(field)) {
+          return true;
+        }
+      })) {
+        return res.json({ error: 'Required field(s) missing' });
+      }
+
       const conflict = [];
       if (!solver.checkRowPlacement(puzzleString, row, column, placement)) {
         conflict.push('row');

@@ -857,6 +857,28 @@ suite('Functional Tests', () => {
 
     });
 
+    // #10
+    test('Check a puzzle placement with missing required fields: POST request to /api/check', done => {
+      const send = {};
+
+      _.sampleSize(['puzzle', 'coordinate', 'value'], 2).forEach(prop => {
+        send[prop] = true;
+      });
+
+      chai.request(server)
+          .post('/api/check')
+          .send(send)
+          .end((err, res) => {
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Required field(s) missing');
+          });
+
+
+      done();
+    });
+
+
   });
 
 
