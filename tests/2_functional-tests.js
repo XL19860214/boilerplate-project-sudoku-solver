@@ -14,6 +14,26 @@ String.prototype.randomChar = function() {
   return this[Math.floor(Math.random() * this.length)];
 };
 
+class SudokuString extends String {
+  
+  rowNumberFromRowText(rowText) {
+    const rowString = 'ABCDEFGHI';
+    return rowString.indexOf(rowText);
+  }
+
+  columnNumberFromColumnText(columnText) {
+    return parseInt(column) - 1;
+  }
+
+  indexToRowNumber(index) {
+    return Math.floor(index / 9);
+  }
+
+  indexToColumnNumber(index) {
+    return index % 9;
+  }
+}
+
 suite('Functional Tests', () => {
 
   suite('Route /api/solve Tests', () => {
@@ -168,6 +188,205 @@ suite('Functional Tests', () => {
             assert.equal(res.status, 200);
           });
       }, err => {
+        done();
+      });
+    });
+
+    // #7
+    test('Check a puzzle placement with single placement conflict: POST request to /api/check', done => {
+
+      const makeRowConflict = puzzleString => {
+        let index = 0;
+        let row = 0;
+        let next = false;
+        let rowString;
+        do {
+          rowString = puzzleString.substring(index, index + 9);
+          if (!rowString.includes('.')) {
+            next = true;
+            index += 9;
+            row += 1;
+          } else {
+            next = false;
+          }
+        } while (next);
+
+        let keep;
+        let result;
+        rowString.split('').forEach((rowPlaceholder, column) => {
+          if (result !== undefined) {
+            return;
+          }
+          if (keep === undefined && rowPlaceholder !== '.') {
+            keep = rowPlaceholder;
+          } else if (keep !== undefined && rowPlaceholder === '.') {
+            result = {
+              rowString: rowString,
+              coordinate: 'ABCDEFGHI'[row] + (column + 1),
+              value: keep
+            }
+          }
+        });
+
+        return result;
+      };
+
+      const makeColumnConflict = puzzleString => {
+        let column = 0;
+        let next = false;
+        let columnString;
+        do {
+          columnString = '';
+          let index = 0;
+          while (columnString.length < 9) {
+            columnString += puzzleString.substring(index + column, index + column + 1);
+            index += 9;
+          }
+          if (!columnString.includes('.')) {
+            next = true;
+            
+            column += 1;
+          } else {
+            next = false;
+          }
+        } while (next);
+
+        let keep;
+        let result;
+        columnString.split('').forEach((columnPlaceholder, row) => {
+          if (result !== undefined) {
+            return;
+          }
+          if (keep === undefined && columnPlaceholder !== '.') {
+            keep = columnPlaceholder;
+          } else if (keep !== undefined && columnPlaceholder === '.') {
+            result = {
+              columnString: columnString,
+              coordinate: 'ABCDEFGHI'[row] + (column + 1),
+              value: keep
+            }
+          }
+        });
+
+        return result;
+      };
+
+      const makeRegionConflict = puzzleString => {
+        let step = 0;
+        let next = false;
+        let regionString;
+        do {
+          regionString = '';
+          let rowStart = Math.floor(step / 3);
+          let columnStart = (step % 3) * 3;
+          
+          while (regionString.length < 9) {
+            let level = 0;
+            while (level < 3) {
+              let pickStart = (rowStart + level) * 9 + columnStart;
+              regionString += puzzleString.substring(pickStart, pickStart + 3);
+              level++;
+            }
+          }
+          if (!regionString.includes('.')) {
+            next = true;
+            step += 1;
+          } else {
+            next = false;
+          }
+        } while (next);
+
+        let keep;
+        let result;
+        regionString.split('').forEach((regionPlaceholder, pos) => {
+          if (result !== undefined) {
+            return;
+          }
+          if (keep === undefined && regionPlaceholder !== '.') {
+            keep = regionPlaceholder;
+          } else if (keep !== undefined && regionPlaceholder === '.') {
+            const rowStart = Math.floor(step / 3);
+            const columnStart = (step % 3) * 3;
+            const level = Math.floor(pos / 3);
+            const row = rowStart + level;
+            const column = columnStart + (pos % 3);
+            result = {
+              columnString: regionString,
+              coordinate: 'ABCDEFGHI'[row] + (column + 1),
+              value: keep
+            }
+          }
+        });
+
+        return result;
+      };
+
+      async.series({
+        rowConflict: cb => async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+          const conflict = makeRowConflict(puzzleAndSolution[0]);
+          // console.log(puzzleAndSolution[0], conflict); // DEBUG
+
+          chai.request(server)
+            .post('/api/check')
+            .send({
+              puzzle: puzzleAndSolution[0],
+              coordinate: conflict.coordinate,
+              value: conflict.value
+            })
+            .end((err, res)=> {
+              callback(err);
+              assert.isNull(err);
+              assert.equal(res.status, 200);
+              assert.isFalse(res.body.valid);
+              assert.include(res.body.conflict, 'row');
+            });
+        }, err => {
+          cb(err, 'done');
+        }),
+        columnConflict: cb => async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+          const conflict = makeColumnConflict(puzzleAndSolution[0]);
+          // console.log(puzzleAndSolution[0], conflict); // DEBUG
+
+          chai.request(server)
+            .post('/api/check')
+            .send({
+              puzzle: puzzleAndSolution[0],
+              coordinate: conflict.coordinate,
+              value: conflict.value
+            })
+            .end((err, res)=> {
+              callback(err);
+              assert.isNull(err);
+              assert.equal(res.status, 200);
+              assert.isFalse(res.body.valid);
+              assert.include(res.body.conflict, 'column');
+            });
+        }, err => {
+          cb(null, 'done');
+        }),
+        regionConflict: cb => async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+          const conflict = makeRegionConflict(puzzleAndSolution[0]);
+          console.log(puzzleAndSolution[0], conflict); // DEBUG
+
+          chai.request(server)
+            .post('/api/check')
+            .send({
+              puzzle: puzzleAndSolution[0],
+              coordinate: conflict.coordinate,
+              value: conflict.value
+            })
+            .end((err, res)=> {
+              callback(err);
+              assert.isNull(err);
+              assert.equal(res.status, 200);
+              assert.isFalse(res.body.valid);
+              assert.include(res.body.conflict, 'region');
+            });
+        }, err => {
+          cb(null, 'done');
+        })
+      })
+      .then(results => {
         done();
       });
     });

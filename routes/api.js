@@ -8,7 +8,31 @@ module.exports = function (app) {
 
   app.route('/api/check')
     .post((req, res) => {
-      res.json({});
+      const puzzleString = req.body.puzzle;
+      const row = solver.rowNumber(req.body.coordinate[0])
+      const column = solver.columnNumber(req.body.coordinate[1]);
+      const placement = req.body.value;
+      const conflict = [];
+      if (!solver.checkRowPlacement(puzzleString, row, column, placement)) {
+        conflict.push('row');
+      }
+      if (!solver.checkColPlacement(puzzleString, row, column, placement)) {
+        conflict.push('column');
+      }
+      if (!solver.checkRegionPlacement(puzzleString, row, column, placement)) {
+        conflict.push('region');
+      }
+
+      if (conflict.length === 0) {
+        res.json({
+          valid: true
+        });
+      } else {
+        res.json({
+          valid: false,
+          conflict
+        });
+      }
     });
     
   app.route('/api/solve')

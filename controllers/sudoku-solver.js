@@ -30,7 +30,7 @@ class SudokuSolver {
 
   //
   columnNumber(column) {
-    return column - 1;
+    return parseInt(column) - 1;
   }
 
   // Region start number
