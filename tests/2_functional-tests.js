@@ -683,10 +683,13 @@ suite('Functional Tests', () => {
       //   ['column', 'region']
       // ];
 
-      const multipleConflictMaker = puzzleString => {
+      const multipleConflictsMaker = puzzleString => {
         let result;
 
         puzzleString.split('').some((char, index, arr) => {
+          if (char !== '.') {
+            return;
+          }
           const sudokuCell = new SudokuCell(puzzleString, index);
           // console.log(`sudokuCell`, sudokuCell); // DEBUG
           // const sudokuRowConflictMaker = new SudokuRowConfliceMaker(cell);
@@ -714,6 +717,7 @@ suite('Functional Tests', () => {
           if (rowColumnIntersection.length > 0) {
             if (rowRegionIntersection.length === 0) {
               result = {
+                puzzleString,
                 rowString,
                 columnString,
                 conflicts: ['row', 'column'],
@@ -725,6 +729,7 @@ suite('Functional Tests', () => {
           } else if (rowRegionIntersection.length > 0) {
             if (columnRegionIntersection.length === 0) {
               result = {
+                puzzleString,
                 rowString,
                 regionString,
                 conflicts: ['row', 'region'],
@@ -735,6 +740,7 @@ suite('Functional Tests', () => {
             }
           } else if (columnRegionIntersection.length > 0) {
             result = {
+                puzzleString,
                 columnString,
                 regionString,
                 conflicts: ['column', 'region'],
@@ -746,35 +752,108 @@ suite('Functional Tests', () => {
         });
 
         return result;
-      }
+      };
 
       async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
-          const conflict = multipleConflictMaker(puzzleAndSolution[0]);
-          // console.log(puzzleAndSolution[0], conflict); // DEBUG
+        const conflict = multipleConflictsMaker(puzzleAndSolution[0]);
+        // console.log(puzzleAndSolution[0], conflict); // DEBUG
 
-          if (conflict === undefined) {
-            return callback(null);
+        if (conflict === undefined) {
+          return callback(null);
+        }
+
+        chai.request(server)
+          .post('/api/check')
+          .send({
+            puzzle: puzzleAndSolution[0],
+            coordinate: conflict.coordinate,
+            value: conflict.value
+          })
+          .end((err, res)=> {
+            callback(err);
+            // console.log(`res.body`, res.body); // DEBUG
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.isFalse(res.body.valid);
+            assert.isArray(res.body.conflict);
+            assert.includeMembers(res.body.conflict, conflict.conflicts);
+          });
+      }, err => {
+        done();
+      });
+
+    });
+
+    // #9
+    test('Check a puzzle placement with all placement conflicts: POST request to /api/check', done => {
+
+      const allConflictsMaker = puzzleString => {
+        let result;
+
+        puzzleString.split('').some((char, index, arr) => {
+          if (char !== '.') {
+            return;
+          }
+          const sudokuCell = new SudokuCell(puzzleString, index);
+
+          const rowString = sudokuCell.rowString;
+          const rowNumbersArray = rowString.replace(/\./g, '').split('');
+          const columnString = sudokuCell.columnString;
+          const columnNumbersArray = columnString.replace(/\./g, '').split('');
+          const regionString = sudokuCell.regionString;
+          const regionNumbersArray = regionString.replace(/\./g, '').split('');
+
+          const rowColumnIntersection = _.intersection(rowNumbersArray, columnNumbersArray);
+          const rowRegionIntersection = _.intersection(rowNumbersArray, regionNumbersArray);
+          const columnRegionIntersection = _.intersection(columnNumbersArray, regionNumbersArray);
+
+          if (rowColumnIntersection.length > 0 && rowRegionIntersection.length > 0) {
+            result = {
+              puzzleString,
+              rowString,
+              columnString,
+              regionString,
+              conflicts: ['row', 'column', 'region'],
+              coordinate: sudokuCell.coordinate,
+              value: rowColumnIntersection[0],
+            };
+
+            return true;
           }
 
-          chai.request(server)
-            .post('/api/check')
-            .send({
-              puzzle: puzzleAndSolution[0],
-              coordinate: conflict.coordinate,
-              value: conflict.value
-            })
-            .end((err, res)=> {
-              callback(err);
-              // console.log(`res.body`, res.body); // DEBUG
-              assert.isNull(err);
-              assert.equal(res.status, 200);
-              assert.isFalse(res.body.valid);
-              assert.isArray(res.body.conflict);
-              assert.includeMembers(res.body.conflict, conflict.conflicts);
-            });
-        }, err => {
-          done();
         });
+
+        return result;
+      };
+
+      async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+        const conflict = allConflictsMaker(puzzleAndSolution[0]);
+        // console.log(puzzleAndSolution[0], conflict); // DEBUG
+
+        if (conflict === undefined) {
+          return callback(null);
+        }
+
+        chai.request(server)
+          .post('/api/check')
+          .send({
+            puzzle: puzzleAndSolution[0],
+            coordinate: conflict.coordinate,
+            value: conflict.value
+          })
+          .end((err, res)=> {
+            callback(err);
+            // console.log(`res.body`, res.body); // DEBUG
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.isFalse(res.body.valid);
+            assert.isArray(res.body.conflict);
+            assert.includeMembers(res.body.conflict, conflict.conflicts);
+          });
+      }, err => {
+        if (err) console.error(err);
+        done();
+      });
 
     });
 

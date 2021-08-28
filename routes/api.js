@@ -12,6 +12,12 @@ module.exports = function (app) {
       const row = solver.rowNumber(req.body.coordinate[0])
       const column = solver.columnNumber(req.body.coordinate[1]);
       const placement = req.body.value;
+      // console.log(
+      //   `req.body`, req.body,
+      //   `row`, row,
+      //   `column`, column,
+      //   `placement`, placement
+      // ); // DEBUG
       const conflict = [];
       if (!solver.checkRowPlacement(puzzleString, row, column, placement)) {
         conflict.push('row');
