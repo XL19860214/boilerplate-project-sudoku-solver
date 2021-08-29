@@ -872,12 +872,98 @@ suite('Functional Tests', () => {
             assert.isNull(err);
             assert.equal(res.status, 200);
             assert.equal(res.body.error, 'Required field(s) missing');
+            done();
           });
 
+    });
+
+    // #11
+    test('Check a puzzle placement with invalid characters: POST request to /api/check', done => {
+      const puzzleStringsWithInvalidCharacters = amount => {
+        const invalidCharacters = '0abcdefghijklmnopqrstuvwxyz';
+        const puzzleStrings = [];
+        let i = 0;
+        while (i < amount) {
+          puzzleStrings.push(invalidCharacters.randomChar().repeat(81));
+          i++;
+        }
+
+        return puzzleStrings;
+      };
+
+      async.eachSeries(puzzleStringsWithInvalidCharacters(10), (puzzleStringWithInvalidCharacters, callback) => {
+       chai.request(server)
+            .post('/api/check')
+            .send({
+              puzzle: puzzleStringWithInvalidCharacters,
+              coordinate: 'A1',
+              value: '1'
+            })
+            .end((err, res)=> {
+              callback(err);
+              assert.isNull(err);
+              assert.equal(res.status, 200);
+              assert.equal(res.body.error, 'Invalid characters in puzzle');
+            });
+      }, err => {
+        done();
+      });
+    });
+
+    // #12
+    test('Check a puzzle placement with incorrect length: POST request to /api/check', done => {
+      const puzzleStringsWithIncorrectLength = amount => {
+        const validCharacters = '123456789.';
+        const puzzleStrings = [];
+        let i = 0;
+        while (i < amount) {
+          const randomLength = Math.floor(Math.random() * 10);
+          if (randomLength === 81) {
+            continue;
+          }
+          let puzzleString = '';
+          let j = 0;
+          while (j < randomLength) {
+            puzzleString += validCharacters.randomChar();
+            j++;
+          }
+          puzzleStrings.push(puzzleString);
+          i++;
+        }
+
+        return puzzleStrings;
+      };
+
+      async.eachSeries(puzzleStringsWithIncorrectLength(10), (puzzleStringWithIncorrectLength, callback) => {
+        chai.request(server)
+          .post('/api/check')
+          .send({
+            puzzle: puzzleStringWithIncorrectLength,
+            coordinate: 'A1',
+            value: '1'
+          })
+          .end((err, res)=> {
+            callback(err);
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Expected puzzle to be 81 characters long');
+          });
+      }, err => {
+        done();
+      });
+    });
+
+    // #13
+    test('Check a puzzle placement with invalid placement coordinate: POST request to /api/check', done => {
 
       done();
     });
 
+    // #14
+    test('Check a puzzle placement with invalid placement value: POST request to /api/check', done => {
+
+      done();
+    });
 
   });
 

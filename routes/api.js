@@ -19,12 +19,22 @@ module.exports = function (app) {
       //   `placement`, placement
       // ); // DEBUG
 
+      // Fields
       if (['puzzle', 'coordinate', 'value'].some(field => {
         if (!req.body.hasOwnProperty(field)) {
           return true;
         }
       })) {
         return res.json({ error: 'Required field(s) missing' });
+      }
+
+      // Invalid puzzle string
+      if (!solver.validate(req.body.puzzle)) {
+        if(/[^1-9\.]/.test(req.body.puzzle)) {
+          return res.json({ error: 'Invalid characters in puzzle' });
+        } else if (req.body.puzzle.length !== 81) {
+          return res.json({ error: 'Expected puzzle to be 81 characters long' });
+        }
       }
 
       const conflict = [];
