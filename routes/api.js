@@ -9,17 +9,11 @@ module.exports = function (app) {
   app.route('/api/check')
     .post((req, res) => {
       const puzzleString = req.body.puzzle;
-      const row = solver.rowNumber(req.body.coordinate[0])
-      const column = solver.columnNumber(req.body.coordinate[1]);
-      const placement = req.body.value;
-      // console.log(
-      //   `req.body`, req.body,
-      //   `row`, row,
-      //   `column`, column,
-      //   `placement`, placement
-      // ); // DEBUG
+      
+      
 
-      // Fields
+
+      // Required field(s) missing
       if (['puzzle', 'coordinate', 'value'].some(field => {
         if (!req.body.hasOwnProperty(field)) {
           return true;
@@ -36,6 +30,26 @@ module.exports = function (app) {
           return res.json({ error: 'Expected puzzle to be 81 characters long' });
         }
       }
+
+      // Invalid coordinate
+      if (!/^[A-I]$/.test(req.body.coordinate[0]) || !/^[1-9]$/.test(req.body.coordinate[1])) {
+        return res.json({ error: 'Invalid coordinate'});
+      }
+      const row = solver.rowNumber(req.body.coordinate[0])
+      const column = solver.columnNumber(req.body.coordinate[1]);
+
+      // Invalid value
+      if (!/^[1-9]$/.test(req.body.value)) {
+        return res.json({ error: 'Invalid value' });
+      }
+      const placement = req.body.value;
+
+      // console.log(
+      //   `req.body`, req.body,
+      //   `row`, row,
+      //   `column`, column,
+      //   `placement`, placement
+      // ); // DEBUG
 
       const conflict = [];
       if (!solver.checkRowPlacement(puzzleString, row, column, placement)) {

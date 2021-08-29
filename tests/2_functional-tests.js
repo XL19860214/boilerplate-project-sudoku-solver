@@ -955,14 +955,52 @@ suite('Functional Tests', () => {
 
     // #13
     test('Check a puzzle placement with invalid placement coordinate: POST request to /api/check', done => {
+      const invalidPlacementCoordinateMaker = () => {
+        return 'RX'
+      };
 
-      done();
+      async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+        chai.request(server)
+          .post('/api/check')
+          .send({
+            puzzle: puzzleAndSolution[0],
+            coordinate: invalidPlacementCoordinateMaker(),
+            value: '1'
+          })
+          .end((err, res)=> {
+            callback(err);
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Invalid coordinate');
+          });
+      }, err => {
+        done();
+      });
     });
 
     // #14
     test('Check a puzzle placement with invalid placement value: POST request to /api/check', done => {
+      const invalidPlacementValueMaker = () => {
+        return _.sample(['a', 'b', 'c', '10']);
+      };
 
-      done();
+      async.eachSeries(puzzlesAndSolutions, (puzzleAndSolution, callback) => {
+        chai.request(server)
+          .post('/api/check')
+          .send({
+            puzzle: puzzleAndSolution[0],
+            coordinate: 'A1',
+            value: invalidPlacementValueMaker()
+          })
+          .end((err, res)=> {
+            callback(err);
+            assert.isNull(err);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.error, 'Invalid value');
+          });
+      }, err => {
+        done();
+      });
     });
 
   });

@@ -275,10 +275,8 @@ suite('UnitTests', () => {
       done();
     });
 
-  });
-
-  // #12
-  test('Solver returns the expected solution for an incomplete puzzle', done => {
+    // #12
+    test('Solver returns the expected solution for an incomplete puzzle', done => {
       puzzlesAndSolutions.forEach(puzzleAndSolution => {
         const solution = solver.solve(puzzleAndSolution[0]);
         assert.notInclude(solution, '.');
@@ -293,6 +291,8 @@ suite('UnitTests', () => {
 
       done();
     });
+
+  });
 
 
 });
