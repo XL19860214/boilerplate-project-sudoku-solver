@@ -117,6 +117,7 @@ class SudokuSolver {
 
   solve(puzzleString) {
     if (!this.validate(puzzleString)) throw new Error('Invalid puzzle string.');
+    // if (!this.validate(puzzleString)) return false;
 
     const valid = puzzleString.split('').every((placeholder, index) => {
       const row = Math.floor(index / 9);
@@ -129,6 +130,7 @@ class SudokuSolver {
     });
 
     if (!valid) throw new Error('Invalid puzzle string.');
+    // if (!valid) return false;
 
     // ======================================================================================
     // Brute-force
